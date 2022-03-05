@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport"
+       content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+ <meta http-equiv="X-UA-Compatible" content="ie=edge">
+ <title>Document</title>
+</head>
+<body>
+
+
+<article class="baidu_pl">
+        <div id="article_content" class="article_content clearfix">
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-d7093e7f7c.css">
+                <div id="content_views" class="htmledit_views">
+                    <div id="cnblogs_post_body"> 
+ <h2><a name="t0"></a>说明</h2> 
+ <p>性能一直是 <a href="https://so.csdn.net/so/search?q=Laravel&amp;spm=1001.2101.3001.7020" target="_blank" class="hl hl-1" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.7020&quot;,&quot;dest&quot;:&quot;https://so.csdn.net/so/search?q=Laravel&amp;spm=1001.2101.3001.7020&quot;}" data-tit="Laravel" data-pretit="laravel">Laravel</a> 框架为人诟病的一个点，所以调优 Laravel 程序算是一个必学的技能。</p> 
+ <p>接下来分享一些开发的最佳实践，还有调优技巧，大家有别的建议也欢迎留言讨论。</p> 
+ <p>这里是简单的列表：</p> 
+ <ol><li>配置信息缓存&nbsp;<code>artisan config:cache</code></li><li>路由缓存&nbsp;<code>artisan route:cache</code></li><li>类映射加载优化&nbsp;<code>artisan optimize</code></li><li>自动加载优化&nbsp;<code>composer dumpautoload</code></li><li>使用 Memcached 来存储会话&nbsp;<code>config/session.php</code></li><li>使用专业缓存驱动器&nbsp;<code>config/cache.php</code></li><li>数据库请求优化</li><li>为数据集书写缓存逻辑</li><li>使用即时编译器（JIT），如：HHVM、OpCache</li><li>前端资源合并 Elixir</li></ol> 
+ <h2><a name="t1"></a>1. 配置信息缓存</h2> 
+ <p>使用以下 Artisan 自带命令，把&nbsp;<code>config</code>&nbsp;文件夹里所有配置信息合并到一个文件里，减少运行时文件的载入数量：</p> 
+ <pre><code class="hljs language-lua">php artisan <span class="hljs-built_in">config</span>:cache</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <p>上面命令会生成文件&nbsp;<code>bootstrap/cache/config.php</code>，可以使用以下命令来取消配置信息缓存：</p> 
+ <pre><code class="hljs language-lua">php artisan <span class="hljs-built_in">config</span>:clear</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <p>此命令做的事情就是把&nbsp;<code>bootstrap/cache/config.php</code>&nbsp;文件删除。</p> 
+ <blockquote> 
+  <p>注意：配置信息缓存不会随着更新而自动重载，所以，开发时候建议关闭配置信息缓存，一般在生产环境中使用，可以配合&nbsp;<a target="_blank" href="http://laravel-china.org/docs/5.1/envoy" rel="noopener noreferrer">Envoy 任务运行器</a>&nbsp;一起使用。</p> 
+ </blockquote> 
+ <h2><a name="t2"></a>2. 路由缓存</h2> 
+ <p>路由缓存可以有效的提高路由器的注册效率，在大型应用程序中效果越加明显，可以使用以下命令：</p> 
+ <pre><code class="hljs language-undefined">php artisan route:cache</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <p>以上命令会生成&nbsp;<code>bootstrap/cache/routes.php</code>&nbsp;文件，需要注意的是，路由缓存不支持路由匿名函数编写逻辑，详见：<a target="_blank" href="http://laravel-china.org/docs/5.1/controllers#%E8%B7%AF%E7%94%B1%E7%BC%93%E5%AD%98" rel="noopener noreferrer">文档 - 路由缓存</a>。</p> 
+ <p>可以使用下面命令清除路由缓存：</p> 
+ <pre><code class="hljs language-undefined">php artisan route:clear</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <p>此命令做的事情就是把&nbsp;<code>bootstrap/cache/routes.php</code>&nbsp;文件删除。</p> 
+ <blockquote> 
+  <p>注意：路由缓存不会随着更新而自动重载，所以，开发时候建议关闭路由缓存，一般在生产环境中使用，可以配合&nbsp;<a target="_blank" href="http://laravel-china.org/docs/5.1/envoy" rel="noopener noreferrer">Envoy 任务运行器</a>&nbsp;一起使用。</p> 
+ </blockquote> 
+ <h2><a name="t3"></a>3. 类映射加载优化</h2> 
+ <p><code>optimize</code>&nbsp;命令把常用加载的类合并到一个文件里，通过减少文件的加载，来提高运行效率：</p> 
+ <pre><code class="hljs language-css">php artisan optimize <span class="hljs-attr">--force</span></code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <p>会生成&nbsp;<code>bootstrap/cache/compiled.php</code>&nbsp;和&nbsp;<code>bootstrap/cache/services.json</code>&nbsp;两个文件。</p> 
+ <p>你可以可以通过修改&nbsp;<code>config/compile.php</code>&nbsp;文件来添加要合并的类。</p> 
+ <p>在&nbsp;<code>production</code>&nbsp;环境中，参数&nbsp;<code>--force</code>&nbsp;不需要指定，文件就会自动生成。</p> 
+ <p>要清除类映射加载优化，请运行以下命令：</p> 
+ <pre><code class="hljs language-css">php artisan <span class="hljs-attribute">clear</span>-compiled</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <p>此命令会删除上面&nbsp;<code>optimize</code>&nbsp;生成的两个文件。</p> 
+ <blockquote> 
+  <p>注意：此命令要运行在&nbsp;<code>php artisan config:cache</code>&nbsp;后，因为&nbsp;<code>optimize</code>&nbsp;命令是根据配置信息（如：<code>config/app.php</code>&nbsp;文件的&nbsp;<code>providers</code>&nbsp;数组）来生成文件的。</p> 
+ </blockquote> 
+ <h2><a name="t4"></a>4. 自动加载优化</h2> 
+ <p>此命令不止针对于 Laravel 程序，适用于所有使用&nbsp;<code>composer</code>&nbsp;来构建的程序。此命令会把&nbsp;<code>PSR-0</code>&nbsp;和&nbsp;<code>PSR-4</code>&nbsp;转换为一个类映射表，来提高类的加载速度。</p> 
+ <pre><code class="hljs language-undefined">composer dumpautoload -o</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <blockquote> 
+  <p>注意：<code>php artisan optimize --force</code>&nbsp;命令里已经做了这个操作。</p> 
+ </blockquote> 
+ <h2><a name="t5"></a>5. 使用 Memcached 来存储会话</h2> 
+ <p>每一个 Laravel 的请求，都会产生会话，修改会话的存储方式能有效提高程序效率，会话的配置信息是<code>config/session.php</code>，建议修改为 Memcached 或者 Redis 等专业的缓存软件：</p> 
+ <pre><code class="language-php hljs"><span class="hljs-string">'driver'</span> =&gt; <span class="hljs-string">'memcached'</span>,</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <h2><a name="t6"></a>6. 使用专业缓存驱动器</h2> 
+ <p>「缓存」是提高应用程序运行效率的法宝之一，默认缓存驱动是&nbsp;<code>file</code>&nbsp;文件缓存，建议切换到专业的缓存系统，如 Redis 或者 Memcached，不建议使用数据库缓存。</p> 
+ <pre><code class="language-php hljs"><span class="hljs-string">'default'</span> =&gt; <span class="hljs-string">'redis'</span>,</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <h2><a name="t7"></a>7. 数据库请求优化</h2> 
+ <p>数据库请求优化</p> 
+ <ul><li>数据关联模型读取时使用&nbsp;<a target="_blank" href="http://laravel-china.org/docs/5.1/eloquent-relationships#%E9%A2%84%E5%8A%A0%E8%BD%BD" rel="noopener noreferrer">延迟预加载</a>&nbsp;和&nbsp;<a target="_blank" href="http://laravel-china.org/docs/5.1/eloquent-relationships#%E9%A2%84%E5%8A%A0%E8%BD%BD" rel="noopener noreferrer">预加载</a>&nbsp;；</li><li>使用&nbsp;<a target="_blank" href="https://github.com/barryvdh/laravel-debugbar" rel="noopener noreferrer">Laravel Debugbar</a>&nbsp;或者&nbsp;<a target="_blank" href="https://phphub.org/topics/23" rel="noopener noreferrer">Clockwork</a>&nbsp;留意每一个页面的总数据库请求数量；</li></ul> 
+ <p>这里的篇幅只写到与 Laravel 相关的，其他关于数据优化的内容，请自行查阅其他资料。</p> 
+ <h2><a name="t8"></a>8. 为数据集书写缓存逻辑</h2> 
+ <p>合理的使用 Laravel 提供的缓存层操作，把从数据库里面拿出来的数据集合进行缓存，减少数据库的压力，运行在内存上的专业缓存软件对数据的读取也远远快于数据库。</p> 
+ <pre><code class="language-php hljs"><span class="hljs-variable">$posts</span> = Cache::remember(<span class="hljs-string">'index.posts'</span>, <span class="hljs-variable">$minutes</span> = <span class="hljs-number">30</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{ <span class="hljs-keyword">return</span> Post::with(<span class="hljs-string">'comments'</span>, <span class="hljs-string">'tags'</span>, <span class="hljs-string">'author'</span>, <span class="hljs-string">'seo'</span>)-&gt;whereHidden(<span class="hljs-number">0</span>)-&gt;get(); });</code><div class="hljs-button {2}" data-title="复制" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.4259&quot;}" onclick="hljs.copyCode(event)"></div></pre> 
+ <p><code>remember</code>&nbsp;甚至连数据关联模型也都一并缓存了，多么方便呀。</p> 
+ <h2><a name="t9"></a>9. 使用即时编译器</h2> 
+ <p>HHVM 和 OpCache 都能轻轻松松的让你的应用程序在不用做任何修改的情况下，直接提高 50% 或者更高的性能，PHPhub 之前做个一个实验，具体请见：<a target="_blank" href="https://phphub.org/topics/301" rel="noopener noreferrer">使用 OpCache 提升 PHP 5.5+ 程序性能</a>。</p> 
+ <h2><a name="t10"></a>10. 前端资源合并</h2> 
+ <p>作为优化的标准，一个页面只应该加载一个 CSS 和 一个 JS 文件，并且文件要能方便走 CDN，需要文件名随着修改而变化。</p> 
+ <p>Laravel Elixir 提供了一套简便实用的方案，详细请见文档：<a target="_blank" href="http://laravel-china.org/docs/5.1/elixir" rel="noopener noreferrer">Laravel Elixir 文档</a>。</p> 
+ <p><br> </p> 
+ <p>更多扩展包&nbsp;<a target="_blank" href="http://www.xiaoshu168.com/tag/laravel-packages" rel="noopener noreferrer">http://www.xiaoshu168.com/tag/laravel-packages</a></p> 
+</div>
+                </div><div><div></div></div>
+        </div>
+
+    </article>
+
+</body>
+</html>
